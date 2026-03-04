@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estadística | Dashboard</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📊</text></svg>">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-mode">
+
+    <div class="app-container">
+        
+        <aside id="sidebar" class="sidebar collapsed">
+            <!-- Botón Toggle Dinámico -->
+            <button id="toggle-sidebar" class="btn-sidebar-toggle" onclick="toggleSidebar()">
+                <div class="arrow-indicator">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </div>
+            </button>
+
+            <div class="sidebar-header">
+                <h2 data-i18n="sidebar_title">📊 | Analítica</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <button class="nav-item active" onclick="cambiarVista('tabla')">
+                    <span class="nav-icon">📋</span> 
+                    <span class="nav-text" data-i18n="nav_table">Tabla de Frecuencias</span>
+                    <svg class="nav-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+                <button class="nav-item" onclick="cambiarVista('tendencia')">
+                    <span class="nav-icon">📈</span> 
+                    <span class="nav-text" data-i18n="nav_tendency">Medidas de Tendencia</span>
+                    <svg class="nav-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+                <button class="nav-item" onclick="cambiarVista('graficas')">
+                    <span class="nav-icon">📊</span> 
+                    <span class="nav-text" data-i18n="nav_charts">Gráficas Estadísticas</span>
+                    <svg class="nav-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+                <button class="nav-item" onclick="cambiarVista('conjuntos')">
+                    <span class="nav-icon">🔗</span> 
+                    <span class="nav-text" data-i18n="nav_sets">Operaciones en Conjunto</span>
+                    <svg class="nav-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+                <button class="nav-item" onclick="cambiarVista('probabilidades')">
+                    <span class="nav-icon">🎲</span> 
+                    <span class="nav-text" data-i18n="nav_prob">Probabilidades</span>
+                    <svg class="nav-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+                <button class="nav-item" onclick="cambiarVista('multiplicativa')">
+                    <span class="nav-icon">🌿</span> 
+                    <span class="nav-text" data-i18n="nav_multi">Regla Multiplicativa</span>
+                    <svg class="nav-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+                <button class="nav-item" onclick="cambiarVista('conteo')">
+                    <span class="nav-icon">🔢</span> 
+                    <span class="nav-text" data-i18n="nav_counting">Permutaciones / Combinaciones</span>
+                    <svg class="nav-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+                <button class="nav-item" onclick="cambiarVista('general')">
+                    <span class="nav-icon">🌐</span> 
+                    <span class="nav-text" data-i18n="nav_general">Vista General (Todo)</span>
+                    <svg class="nav-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+                <div class="nav-separator" data-i18n="nav_separator">Gestión</div>
+                <button class="nav-item" onclick="cambiarVista('gestion')">
+                    <span class="nav-icon">⚙️</span> 
+                    <span class="nav-text" data-i18n="nav_mgmt">Panel de Gestión</span>
+                    <svg class="nav-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+                <input type="file" id="input-importar" style="display: none;" accept=".json" onchange="importarProyecto(this)">
+            </nav>
+
+            <div class="lang-selector">
+                <button class="lang-btn active" onclick="cambiarIdioma('es')">ES</button>
+                <button class="lang-btn" onclick="cambiarIdioma('en')">EN</button>
+            </div>
+
+            <div class="sidebar-footer" data-i18n="footer_dev">
+                Developed by OMMM
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="header-left">
+                    <h1 id="view-title" data-i18n="header_dashboard">🌐 | Dashboard Estadístico</h1>
+                </div>
+                
+                <button id="theme-toggle" class="btn-theme" title="Cambiar modo de color">
+                    <div id="theme-icon-container">
+                        <!-- El SVG se inyectará desde JS para manejar el cambio profesionalmente -->
+                    </div>
+                </button>
+            </header>
+
+            <div id="content-area" class="dashboard-grid">
+                
+                <section class="card input-panel">
+                    <div class="card-header">
+                        <h3 data-i18n="card_data_input">📥 | Entrada de Datos</h3>
+                        <button class="btn-refresh" onclick="regenerarDatosFijos()" title="Regenerar datos aleatorios">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                        </button>
+                    </div>
+                    
+                    <div class="data-group">
+                        <label class="section-subtitle" data-i18n="label_random_sample">Muestra Aleatoria (Sistema)</label>
+                        <div id="display-aleatorios" class="chips-container">
+                            <span style="opacity: 0.5; font-style: italic; font-size: 0.8rem;" data-i18n="hint_generate">Haz clic en el botón de refresco para generar datos...</span>
+                        </div>
+                    </div>
+
+                    <div class="data-group">
+                        <label class="section-subtitle"><span data-i18n="label_manual_data">Datos Manuales</span> <span id="contador-header" class="counter-badge">(0/20)</span></label>
+                        <textarea id="input-manual" data-i18n-placeholder="input_manual_placeholder" placeholder="Ej: 10, 25, 30..."></textarea>
+                    </div>
+
+                    <button class="btn-primary" onclick="actualizarTodo()" data-i18n="btn_update">Actualizar y Calcular</button>
+                </section>
+
+                <section id="modulo-tendencia" class="card summary-panel">
+                    <div class="card-header" style="grid-column: 1/-1; margin-bottom: 10px;"><h3 data-i18n="card_tendency">📈 | Medidas de Tendencia</h3></div>
+                    <div class="stat-item">
+                        <span class="stat-label" data-i18n="stat_mean">Media (x̄)</span>
+                        <div id="stat-media" class="stat-value">-</div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label" data-i18n="stat_median">Mediana (Me)</span>
+                        <div id="stat-mediana" class="stat-value">-</div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label" data-i18n="stat_mode">Moda (Mo)</span>
+                        <div id="stat-moda" class="stat-value">-</div>
+                    </div>
+                </section>
+
+                <section id="modulo-graficas" class="card chart-panel">
+                    <div class="card-header"><h3 data-i18n="card_visualization">📊 | Visualización Avanzada</h3></div>
+                    <div class="charts-stack">
+                        <div class="chart-wrapper">
+                            <h4 data-i18n="chart_histogram">Histograma de Frecuencias</h4>
+                            <div class="canvas-area">
+                                <canvas id="canvas-histograma"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-wrapper">
+                            <h4 data-i18n="chart_polygon">Polígono de Frecuencias</h4>
+                            <div class="canvas-area">
+                                <canvas id="canvas-poligono"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-wrapper">
+                            <h4 data-i18n="chart_ogive">Ojiva (Frecuencia Acumulada)</h4>
+                            <div class="canvas-area">
+                                <canvas id="canvas-ojiva"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-wrapper">
+                            <h4 data-i18n="chart_pareto">Diagrama de Pareto</h4>
+                            <div class="canvas-area">
+                                <canvas id="canvas-pareto"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="modulo-tabla" class="card results-panel">
+                    <div class="card-header"><h3 data-i18n="card_table">📋 | Tabla de Frecuencias</h3></div>
+                    <div id="tabla-area" class="table-wrapper"></div>
+                </section>
+
+                <section id="modulo-conjuntos" class="card set-operations-panel" style="display: none;">
+                    <div class="card-header">
+                        <h3 data-i18n="card_sets">🔗 | Operaciones en Conjunto</h3>
+                        <button class="btn-primary" onclick="agregarNuevoConjunto()" style="width: auto; padding: 8px 15px; font-size: 0.8rem;" data-i18n="btn_add_set">+ Añadir Conjunto</button>
+                    </div>
+                    
+                    <div id="contenedor-conjuntos" class="sets-grid">
+                        <div style="grid-column: 1/-1; text-align: center; padding: 40px; border: 2px dashed var(--border); border-radius: 20px; opacity: 0.5;">
+                            <div style="font-size: 3rem; margin-bottom: 15px;">🔗</div>
+                            <h4 data-i18n="hint_no_sets">No hay conjuntos creados</h4>
+                            <p style="font-size: 0.9rem;" data-i18n="hint_add_sets">Pulsa el botón superior para empezar a operar.</p>
+                        </div>
+                    </div>
+
+                    <!-- Panel de Control de Operaciones Encadenadas -->
+                    <div class="card operations-control" style="background: var(--input-bg); margin-top: 25px; padding: 20px;">
+                        <div class="card-header" style="margin-bottom: 15px; flex-wrap: wrap; gap: 15px;">
+                            <div class="section-subtitle" style="margin-bottom: 0;" data-i18n="config_op">Configurar Operación</div>
+                            
+                            <div class="toggle-container" style="display: flex; align-items: center; gap: 10px;">
+                                <label class="switch">
+                                    <input type="checkbox" id="toggle-advanced-mode" onchange="toggleModoAvanzado()">
+                                    <span class="slider round"></span>
+                                </label>
+                                <span style="font-size: 0.75rem; font-weight: 700; opacity: 0.8;" data-i18n="mode_advanced">MODO AVANZADO</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Modo Básico (Cadena) -->
+                        <div id="modo-basico-ops">
+                            <div id="cadena-operaciones" class="ops-chain-container">
+                                <!-- Los pasos de la operación se generarán aquí -->
+                            </div>
+                            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                                <button class="btn-primary" onclick="calcularOperacionEncadenada()" data-i18n="btn_execute">Ejecutar Operación</button>
+                                <button class="btn-refresh" onclick="agregarPasoOperacion()" title="Añadir conjunto a la cadena">➕</button>
+                                <button class="btn-refresh" onclick="reiniciarOperacion()" title="Reiniciar cadena">🧹</button>
+                            </div>
+                        </div>
+
+                        <!-- Modo Avanzado (Fórmula) -->
+                        <div id="modo-avanzado-ops" style="display: none;">
+                            <div class="data-group" style="margin-bottom: 15px;">
+                                <input type="text" id="input-formula-conjuntos" class="set-select" 
+                                       style="width: 100%; font-family: monospace; font-size: 1.1rem; letter-spacing: 1px;" 
+                                       placeholder="Ej: (A ∪ B) - C"
+                                       oninput="validarCaracteresFormula(this)">
+                                <small style="opacity: 0.6; display: block; margin-top: 8px;" data-i18n="formula_hint">Solo se permiten letras de conjuntos, paréntesis y símbolos (∪, ∩, -, Δ).</small>
+                            </div>
+                            <div class="formula-helper" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                <button class="btn-refresh" onclick="insertarSimbolo(' ∪ ')">∪</button>
+                                <button class="btn-refresh" onclick="insertarSimbolo(' ∩ ')">∩</button>
+                                <button class="btn-refresh" onclick="insertarSimbolo(' - ')">-</button>
+                                <button class="btn-refresh" onclick="insertarSimbolo(' Δ ')">Δ</button>
+                                <button class="btn-refresh" onclick="insertarSimbolo('(')">(</button>
+                                <button class="btn-refresh" onclick="insertarSimbolo(')')">)</button>
+                                <div style="width: 100%; margin-top: 5px; font-size: 0.7rem; opacity: 0.5;">Plantillas rápidas:</div>
+                                <button class="btn-refresh" style="width: auto; padding: 0 10px;" onclick="document.getElementById('input-formula-conjuntos').value = '(A ∪ B) ∩ C'"> (A ∪ B) ∩ C </button>
+                                <button class="btn-refresh" style="width: auto; padding: 0 10px;" onclick="document.getElementById('input-formula-conjuntos').value = '(A ∩ B) - C'"> (A ∩ B) - C </button>
+                                <button class="btn-refresh" style="width: auto; padding: 0 10px;" onclick="document.getElementById('input-formula-conjuntos').value = 'A Δ B'"> A Δ B </button>
+                            </div>
+                            <button class="btn-primary" onclick="calcularFormulaAvanzada()" style="margin-top: 20px;" data-i18n="btn_calc_formula">Calcular Fórmula Compleja</button>
+                        </div>
+                    </div>
+
+                    <div id="set-results" class="results-stack">
+                        <!-- Los resultados aparecerán aquí -->
+                    </div>
+                </section>
+
+                <section id="modulo-probabilidades" class="card probabilities-panel" style="display: none;">
+                    <div class="card-header">
+                        <h3 data-i18n="card_prob_classical">🎲 | Probabilidad Clásica</h3>
+                        <button class="btn-refresh" onclick="generarProblemaAleatorio()" title="Generar problema aleatorio">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                        </button>
+                    </div>
+
+                    <div id="prob-problem-text" class="card" style="background: var(--input-bg); margin-bottom: 20px; padding: 15px; border-left: 4px solid var(--primary); display: none;">
+                        <p id="problem-desc" style="margin: 0; font-style: italic; opacity: 0.9;"></p>
+                    </div>
+
+                    <div class="sets-grid">
+                        <div class="data-group card" style="background: var(--input-bg); padding: 20px; border-radius: 12px;">
+                            <label class="section-subtitle" data-i18n="label_fav_cases">Casos Favorables (n)</label>
+                            <div class="custom-number-input">
+                                <button class="btn-step" onclick="cambiarValorInput('input-fav', -1)">-</button>
+                                <input type="number" id="input-fav" placeholder="0" onkeypress="return soloNumerosPositivos(event)">
+                                <button class="btn-step" onclick="cambiarValorInput('input-fav', 1)">+</button>
+                            </div>
+                            <small style="opacity: 0.6; margin-top: 10px; display: block;" data-i18n="hint_fav">Número de resultados que cumplen la condición.</small>
+                        </div>
+                        <div class="data-group card" style="background: var(--input-bg); padding: 20px; border-radius: 12px;">
+                            <label class="section-subtitle" data-i18n="label_total_cases">Casos Totales (N)</label>
+                            <div class="custom-number-input">
+                                <button class="btn-step" onclick="cambiarValorInput('input-total', -1)">-</button>
+                                <input type="number" id="input-total" placeholder="0" onkeypress="return soloNumerosPositivos(event)">
+                                <button class="btn-step" onclick="cambiarValorInput('input-total', 1)">+</button>
+                            </div>
+                            <small style="opacity: 0.6; margin-top: 10px; display: block;" data-i18n="hint_total">Número total de resultados posibles en el espacio muestral.</small>
+                        </div>
+                    </div>
+                    <button class="btn-primary" onclick="calcularProbabilidadClasica()" style="margin-top: 10px;" data-i18n="btn_calc_prob">Calcular Probabilidad P(A)</button>
+
+                    <div id="prob-results" class="results-stack" style="margin-top: 25px;">
+                        <!-- Los resultados aparecerán aquí -->
+                    </div>
+                </section>
+                <section id="modulo-multiplicativa" class="card" style="display: none;">
+                    <div class="card-header">
+                        <h3 data-i18n="card_multiplicative">🌿 | Regla Multiplicativa & Diagrama de Árbol</h3>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn-refresh" onclick="reiniciarArbol()" title="Reiniciar Árbol" style="padding: 5px;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><polyline points="21 3 21 8 16 8"/></svg>
+                            </button>
+                            <button class="btn-primary" onclick="generarEjercicioMultiplicativo()" style="width: auto; font-size: 0.8rem; padding: 5px 15px;" data-i18n="btn_random_exercise">Ejercicio Aleatorio</button>
+                        </div>
+                    </div>
+
+                    <div id="multi-problem-context" class="card problem-context-box">
+                        <div style="display: flex; align-items: flex-start; gap: 15px;">
+                            <span style="font-size: 1.5rem;">📖</span>
+                            <div>
+                                <h4 style="margin: 0 0 5px 0; color: var(--primary);" data-i18n="label_context">Contexto del Problema</h4>
+                                <p id="multi-problem-desc" style="margin: 0; font-size: 0.9rem; line-height: 1.4; opacity: 0.9; font-style: italic;"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-grid" style="grid-template-columns: 1fr 2fr; margin-bottom: 0;">
+                        <!-- Panel de Control (Izquierda) -->
+                        <div class="card" style="background: var(--input-bg); border: 1px solid var(--border); height: fit-content;">
+                            <label class="section-subtitle" data-i18n="label_diagram_design">Diseño del Diagrama</label>
+                            
+                            <div id="tree-controls">
+                                <div style="margin-bottom: 15px; padding: 15px; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border);">
+                                    <span style="font-size: 0.75rem; opacity: 0.6; text-transform: uppercase; font-weight: 700;" data-i18n="selected_point">📍 Punto Seleccionado:</span>
+                                    <div id="selected-node-name" style="font-weight: 800; color: var(--primary); margin: 5px 0 12px 0; font-size: 1.1rem;">Inicio</div>
+                                    
+                                    <div class="data-group" style="margin-bottom: 0;">
+                                        <label style="font-size: 0.75rem; display: block; margin-bottom: 5px; opacity: 0.8;" data-i18n="change_point_name">Cambiar nombre de este punto:</label>
+                                        <div style="display: flex; gap: 5px;">
+                                            <input type="text" id="edit-node-name" class="set-select" placeholder="Nuevo nombre..." style="width: 100%; height: 35px; font-size: 0.85rem;">
+                                            <button class="btn-primary" onclick="editarNombrePunto()" style="width: auto; padding: 0 10px; height: 35px;">Ok</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="data-group">
+                                    <label class="section-subtitle" style="font-size: 0.8rem; margin-bottom: 8px;" data-i18n="add_option">Añadir nueva opción (hijo)</label>
+                                    <input type="text" id="branch-name" class="set-select" placeholder="Ej: Cara, Cruz, Roja..." style="width: 100%;">
+                                </div>
+
+                                <div class="data-group">
+                                    <label style="font-size: 0.8rem; display: block; margin-bottom: 5px;" data-i18n="label_prob_option">Probabilidad de esta opción</label>
+                                    <div class="custom-number-input">
+                                        <button class="btn-step" onclick="cambiarValorInput('branch-prob', -0.1)">-</button>
+                                        <input type="number" id="branch-prob" placeholder="0.5" step="0.1" onkeypress="return soloNumerosPositivos(event)">
+                                        <button class="btn-step" onclick="cambiarValorInput('branch-prob', 0.1)">+</button>
+                                    </div>
+                                </div>
+
+                                <button class="btn-primary" onclick="agregarRamaArbol()" data-i18n="btn_add_option">+ Añadir Opción</button>
+                            </div>
+                            
+                            <div id="calc-results" style="margin-top: 25px; border-top: 1px solid var(--border); padding-top: 15px;">
+                                <label class="section-subtitle" data-i18n="path_result">Resultado del Camino</label>
+                                <div id="path-probability-display" style="font-family: monospace; font-size: 0.85rem; opacity: 0.8; line-height: 1.4;" data-i18n="path_hint">
+                                    Haz clic en una opción final para calcular su probabilidad.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Área de Visualización (Derecha) -->
+                        <div class="card" style="background: var(--card-bg); border: 1px solid var(--border); overflow: hidden; padding: 0; position: relative; height: 500px;">
+                            <div id="tree-canvas-container" style="width: 100%; height: 100%; overflow: auto; cursor: grab;">
+                                <!-- El árbol se renderizará aquí vía JS -->
+                                <canvas id="tree-canvas"></canvas>
+                            </div>
+                            <div style="position: absolute; bottom: 10px; right: 10px; opacity: 0.5; font-size: 0.7rem;" data-i18n="canvas_nav_hint">
+                                Usa Scroll/Drag para navegar
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <section id="modulo-conteo" class="card" style="display: none;">
+                    <div class="card-header">
+                        <h3 data-i18n="card_conteo">🔢 | Permutaciones y Combinaciones</h3>
+                        <button class="btn-primary" onclick="generarEjercicioConteo()" style="width: auto; font-size: 0.8rem; padding: 5px 15px;" data-i18n="btn_random_exercise">Ejercicio Aleatorio</button>
+                    </div>
+
+                    <div id="conteo-problem-text" class="card" style="background: var(--input-bg); margin-bottom: 25px; padding: 15px; border-left: 4px solid var(--primary); display: none;">
+                        <p id="conteo-desc" style="margin: 0; font-style: italic; opacity: 0.9;"></p>
+                    </div>
+
+                    <div class="sets-grid">
+                        <!-- Panel Permutaciones -->
+                        <div class="card" style="background: var(--input-bg); border: 1px solid var(--border);">
+                            <div class="res-title" style="color: var(--primary); font-size: 1rem; margin-bottom: 15px;" data-i18n="perm_title">P(n, r) - Permutaciones</div>
+                            <p style="font-size: 0.75rem; opacity: 0.7; margin-bottom: 15px;" data-i18n="perm_hint">El orden <b>SÍ</b> importa.</p>
+                            
+                            <div class="data-group">
+                                <label style="font-size: 0.8rem;" data-i18n="total_elements">Total de elementos (n)</label>
+                                <div class="custom-number-input">
+                                    <button class="btn-step" onclick="cambiarValorInput('perm-n', -1)">-</button>
+                                    <input type="number" id="perm-n" placeholder="n" onkeypress="return soloNumerosPositivos(event)">
+                                    <button class="btn-step" onclick="cambiarValorInput('perm-n', 1)">+</button>
+                                </div>
+                            </div>
+                            <div class="data-group">
+                                <label style="font-size: 0.8rem;" data-i18n="select_elements">Elementos a elegir (r)</label>
+                                <div class="custom-number-input">
+                                    <button class="btn-step" onclick="cambiarValorInput('perm-r', -1)">-</button>
+                                    <input type="number" id="perm-r" placeholder="r" onkeypress="return soloNumerosPositivos(event)">
+                                    <button class="btn-step" onclick="cambiarValorInput('perm-r', 1)">+</button>
+                                </div>
+                            </div>
+                            <button class="btn-primary" onclick="calcularPermutacion()" data-i18n="btn_calc_perm">Calcular P(n, r)</button>
+                            
+                            <div id="res-perm" style="margin-top: 20px;"></div>
+                        </div>
+
+                        <!-- Panel Combinaciones -->
+                        <div class="card" style="background: var(--input-bg); border: 1px solid var(--border);">
+                            <div class="res-title" style="color: var(--accent); font-size: 1rem; margin-bottom: 15px;" data-i18n="comb_title">C(n, r) - Combinaciones</div>
+                            <p style="font-size: 0.75rem; opacity: 0.7; margin-bottom: 15px;" data-i18n="comb_hint">El orden <b>NO</b> importa.</p>
+                            
+                            <div class="data-group">
+                                <label style="font-size: 0.8rem;" data-i18n="total_elements">Total de elementos (n)</label>
+                                <div class="custom-number-input">
+                                    <button class="btn-step" onclick="cambiarValorInput('comb-n', -1)">-</button>
+                                    <input type="number" id="comb-n" placeholder="n" onkeypress="return soloNumerosPositivos(event)">
+                                    <button class="btn-step" onclick="cambiarValorInput('comb-n', 1)">+</button>
+                                </div>
+                            </div>
+                            <div class="data-group">
+                                <label style="font-size: 0.8rem;" data-i18n="select_elements">Elementos a elegir (r)</label>
+                                <div class="custom-number-input">
+                                    <button class="btn-step" onclick="cambiarValorInput('comb-r', -1)">-</button>
+                                    <input type="number" id="comb-r" placeholder="r" onkeypress="return soloNumerosPositivos(event)">
+                                    <button class="btn-step" onclick="cambiarValorInput('comb-r', 1)">+</button>
+                                </div>
+                            </div>
+                            <button class="btn-primary" style="background: var(--accent);" onclick="calcularCombinacion()" data-i18n="btn_calc_comb">Calcular C(n, r)</button>
+                            
+                            <div id="res-comb" style="margin-top: 20px;"></div>
+                        </div>
+                    </div>
+                </section>
+                <section id="modulo-gestion" class="card" style="display: none;">
+                    <div class="card-header"><h3 data-i18n="card_gestion">⚙️ | Panel de Gestión de Proyecto</h3></div>
+                    
+                    <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr;">
+                        <!-- Panel Exportar -->
+                        <div class="card" style="background: var(--input-bg); border: 1px solid var(--border); display: flex; flex-direction: column; justify-content: space-between;">
+                            <div>
+                                <div style="font-size: 2.5rem; margin-bottom: 15px;">📤</div>
+                                <h4 class="section-subtitle" data-i18n="export_title">Exportar Reporte y Proyecto</h4>
+                                <p style="font-size: 0.85rem; opacity: 0.8; line-height: 1.5; margin-bottom: 20px;" data-i18n="export_desc">
+                                    Genera un reporte detallado en formato <b>Excel</b> con tus cálculos actuales y descarga un archivo <b>.json</b> que servirá como respaldo de seguridad para restaurar tu progreso más tarde.
+                                </p>
+                            </div>
+                            <button class="btn-primary" onclick="confirmarAccionGestion('exportar')" data-i18n="btn_prepare_dl">Preparar Descargas</button>
+                        </div>
+
+                        <!-- Panel Importar -->
+                        <div class="card" style="background: var(--input-bg); border: 1px solid var(--border); display: flex; flex-direction: column; justify-content: space-between;">
+                            <div>
+                                <div style="font-size: 2.5rem; margin-bottom: 15px;">📥</div>
+                                <h4 class="section-subtitle" data-i18n="import_title">Cargar Proyecto Guardado</h4>
+                                <p style="font-size: 0.85rem; opacity: 0.8; line-height: 1.5; margin-bottom: 20px;" data-i18n="import_desc">
+                                    Selecciona un archivo de proyecto (<b>.json</b>) previamente exportado desde esta plataforma. Al cargarlo, se restaurarán todos los datos, conjuntos, diagramas y configuraciones automáticamente.
+                                </p>
+                            </div>
+                            <button class="btn-primary" style="background: var(--accent);" onclick="confirmarAccionGestion('importar')" data-i18n="btn_select_file">Seleccionar Archivo</button>
+                        </div>
+                    </div>
+                </section>
+                
+            </div> </main>
+    </div>
+
+    <div class="version-badge">v1.0</div>
+
+    <div id="custom-alert" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <span id="alert-icon">⚠️</span>
+                <h4 id="alert-title" data-i18n="alert_system">Aviso del Sistema</h4>
+            </div>
+            <p id="alert-message">Mensaje de prueba</p>
+            <div id="alert-actions" style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+                <button id="btn-alert-cancel" class="btn-primary btn-danger" onclick="cerrarAlerta()" style="width: auto;" data-i18n="btn_close">Cerrar</button>
+                <button id="btn-alert-confirm" class="btn-primary" style="width: auto; display: none;" data-i18n="btn_confirm">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
