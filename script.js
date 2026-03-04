@@ -48,9 +48,16 @@ const TRADUCCIONES = {
         chart_trend: 'Tendencia',
         chart_ogive: 'Ojiva (Frecuencia Acumulada)',
         chart_pareto: 'Diagrama de Pareto',
+        chart_pareto_line: '% Acumulado',
         card_table: '📋 | Tabla de Frecuencias',
         table_total: 'TOTAL',
         table_no_data: 'Sin datos registrados',
+        table_col_class: 'Clase (Intervalo)',
+        table_col_mark: 'Marca (xᵢ)',
+        table_col_f: 'Frec. Absoluta (fᵢ)',
+        table_col_F: 'Frec. Acumulada (Fᵢ)',
+        table_col_fr: 'Frec. Relativa (frᵢ%)',
+        table_col_Fr: 'Frec. Rel. Acum. (Frᵢ%)',
         card_sets: '🔗 | Operaciones en Conjunto',
         hint_no_sets: 'No hay conjuntos creados',
         hint_add_sets: 'Pulsa el botón superior para empezar a operar.',
@@ -139,9 +146,16 @@ const TRADUCCIONES = {
         chart_trend: 'Trend',
         chart_ogive: 'Ogive (Cumulative Frequency)',
         chart_pareto: 'Pareto Chart',
+        chart_pareto_line: '% Cumulative',
         card_table: '📋 | Frequency Table',
         table_total: 'TOTAL',
         table_no_data: 'No data recorded',
+        table_col_class: 'Class (Interval)',
+        table_col_mark: 'Mark (xᵢ)',
+        table_col_f: 'Abs. Freq. (fᵢ)',
+        table_col_F: 'Cum. Freq. (Fᵢ)',
+        table_col_fr: 'Rel. Freq. (frᵢ%)',
+        table_col_Fr: 'Cum. Rel. Freq. (Frᵢ%)',
         card_sets: '🔗 | Set Operations',
         hint_no_sets: 'No sets created yet',
         hint_add_sets: 'Click the button above to start operating.',
@@ -331,13 +345,17 @@ function cambiarVista(tipo) {
         if (target) target.style.display = (tipo === 'tendencia' ? "grid" : "block");
     }
 
-    if (tipo === 'graficas') {
+    if (tipo === 'graficas' || tipo === 'general') {
         actualizarTodo();
         setTimeout(() => {
             [miHistograma, miPoligono, miOjiva, miPareto].forEach(chart => {
-                if (chart) chart.resize();
+                if (chart) {
+                    chart.stop(); // Detener animaciones en curso
+                    chart.resize();
+                    chart.update('none'); // Actualización rápida sin animaciones de entrada
+                }
             });
-        }, 100);
+        }, 150);
     }
     if (tipo === 'conjuntos') {
         renderizarConjuntosUI();
@@ -360,88 +378,256 @@ function regenerarDatosFijos() {
 
 function actualizarTodo() {
     const input = document.getElementById('input-manual');
+    const inputK = document.getElementById('input-k');
     if (!input) return;
     const valManual = input.value.split(/[,\s\n]+/).map(n => parseFloat(n)).filter(n => !isNaN(n));
     const todos = [...datosFijos, ...valManual].sort((a, b) => a - b);
     
     document.getElementById('contador-header').innerText = `(${valManual.length}/20)`;
     
-    // Tendency
+    let clases = [];
     if (todos.length > 0) {
-        const media = (todos.reduce((a, b) => a + b, 0) / todos.length).toFixed(2);
-        const mid = Math.floor(todos.length / 2);
-        const mediana = todos.length % 2 !== 0 ? todos[mid] : (todos[mid-1] + todos[mid]) / 2;
-        const f = {}; todos.forEach(d => f[d] = (f[d] || 0) + 1);
-        let max = 0, modas = [];
-        for (const n in f) { if (f[n] > max) { max = f[n]; modas = [n]; } else if (f[n] === max) modas.push(n); }
+        // --- Cálculo de Clases (Datos Agrupados) ---
+        const n = todos.length;
+        const min = todos[0];
+        const max = todos[n - 1];
+        const R = max - min;
         
+        // Número de clases (k): Prioridad al input manual, luego Sturges
+        let k = parseInt(inputK?.value);
+        if (isNaN(k) || k <= 0) {
+            k = Math.ceil(1 + 3.322 * Math.log10(n));
+        }
+        
+        const A = R === 0 ? 1 : R / k; // Amplitud
+        
+        for (let i = 0; i < k; i++) {
+            const li = min + (i * A);
+            const ls = li + A;
+            const marca = (li + ls) / 2;
+            
+            // Contar frecuencia (el último intervalo incluye el límite superior)
+            const f = todos.filter(d => (i === k - 1) ? (d >= li && d <= ls) : (d >= li && d < ls)).length;
+            
+            clases.push({
+                intervalo: `[${li.toFixed(1)}, ${ls.toFixed(1)}${i === k - 1 ? ']' : ')'}`,
+                li, ls, marca, f
+            });
+        }
+
+        // --- Medidas de Tendencia para Datos Agrupados ---
+        const media = (clases.reduce((acc, c) => acc + (c.marca * c.f), 0) / n).toFixed(2);
+        
+        // Mediana (aproximación por clase mediana)
+        let fAcum = 0, claseMediana = clases[0];
+        for (let c of clases) {
+            fAcum += c.f;
+            if (fAcum >= n / 2) { claseMediana = c; break; }
+        }
+        const Fi_1 = (clases.indexOf(claseMediana) > 0) ? clases.slice(0, clases.indexOf(claseMediana)).reduce((a, b) => a + b.f, 0) : 0;
+        const mediana = (claseMediana.li + (((n/2) - Fi_1) / claseMediana.f) * A).toFixed(2);
+        
+        // Moda (aproximación por clase modal)
+        const claseModal = [...clases].sort((a, b) => b.f - a.f)[0];
+        const idxModal = clases.indexOf(claseModal);
+        const d1 = claseModal.f - (idxModal > 0 ? clases[idxModal - 1].f : 0);
+        const d2 = claseModal.f - (idxModal < clases.length - 1 ? clases[idxModal + 1].f : 0);
+        const moda = (claseModal.li + (d1 / (d1 + d2)) * A).toFixed(2);
+
         document.getElementById('stat-media').innerText = media;
-        document.getElementById('stat-mediana').innerText = mediana;
-        document.getElementById('stat-moda').innerText = max > 1 ? modas.join(', ') : 'N/A';
+        document.getElementById('stat-mediana').innerText = isNaN(mediana) ? "-" : mediana;
+        document.getElementById('stat-moda').innerText = isNaN(moda) ? "-" : moda;
     } else {
         ['media', 'mediana', 'moda'].forEach(id => document.getElementById(`stat-${id}`).innerText = "-");
     }
 
-    // Table
-    renderizarTabla(todos);
-    
-    // Charts
-    if (document.getElementById('modulo-graficas')?.style.display !== "none") generarGraficas(todos);
+    // Renderizado
+    renderizarTabla(clases, todos.length);
+    if (document.getElementById('modulo-graficas')?.style.display !== "none") generarGraficas(clases);
 }
 
-function renderizarTabla(datos) {
+function renderizarTabla(clases, total) {
     const area = document.getElementById('tabla-area');
     if (!area) return;
     const lang = localStorage.getItem('pref_lang') || 'es';
-    if (datos.length === 0) { 
-        area.innerHTML = `<p style='text-align:center; opacity:0.5; padding:20px;'>${TRADUCCIONES[lang].table_no_data || 'Sin datos'}</p>`; 
+    const T = TRADUCCIONES[lang];
+    
+    if (clases.length === 0) { 
+        area.innerHTML = `<p style='text-align:center; opacity:0.5; padding:20px;'>${T.table_no_data}</p>`; 
         return; 
     }
     
-    const total = datos.length;
-    const f = {}; datos.forEach(d => f[d] = (f[d] || 0) + 1);
-    let html = `<table><thead><tr><th>x</th><th>f</th><th>F</th><th>fr%</th><th>Fr%</th></tr></thead><tbody>`;
-    let ac = 0;
+    let html = `<table><thead><tr>
+        <th title="Clase">${T.table_col_class}</th>
+        <th title="Marca de Clase">${T.table_col_mark}</th>
+        <th title="Frecuencia Absoluta">${T.table_col_f}</th>
+        <th title="Frecuencia Acumulada">${T.table_col_F}</th>
+        <th title="Frecuencia Relativa">${T.table_col_fr}</th>
+        <th title="Frecuencia Relativa Acumulada">${T.table_col_Fr}</th>
+    </tr></thead><tbody>`;
     
-    Object.keys(f).forEach(x => {
-        const val = f[x]; ac += val;
-        const fr = (val / total * 100).toFixed(1);
+    let ac = 0;
+    clases.forEach(c => {
+        ac += c.f;
+        const fr = (c.f / total * 100).toFixed(1);
         const Fr = (ac / total * 100).toFixed(1);
-        html += `<tr><td><b>${x}</b></td><td>${val}</td><td>${ac}</td><td>${fr}%</td><td>${Fr}%</td></tr>`;
+        html += `<tr>
+            <td><b>${c.intervalo}</b></td>
+            <td>${c.marca.toFixed(1)}</td>
+            <td>${c.f}</td>
+            <td>${ac}</td>
+            <td>${fr}%</td>
+            <td>${Fr}%</td>
+        </tr>`;
     });
 
-    // Fila de Totales
     html += `<tr class="total-row">
-        <td><b>${TRADUCCIONES[lang].table_total || 'TOTAL'}</b></td>
+        <td><b>${T.table_total}</b></td>
+        <td>-</td>
         <td><b>${total}</b></td>
         <td>-</td>
         <td><b>100.0%</b></td>
         <td>-</td>
-    </tr>`;
-
-    html += `</tbody></table>`;
+    </tr></tbody></table>`;
+    
     area.innerHTML = html;
 }
 
-function generarGraficas(datos) {
-    if (datos.length === 0) return;
+function generarGraficas(clases) {
+    if (clases.length === 0) return;
     const style = getComputedStyle(document.body);
     const color = style.getPropertyValue('--primary').trim();
     const lang = localStorage.getItem('pref_lang') || 'es';
-    const f = {}; datos.forEach(d => f[d] = (f[d] || 0) + 1);
-    const labels = Object.keys(f), values = Object.values(f);
+    
+    const labels = clases.map(c => c.intervalo);
+    const marcas = clases.map(c => c.marca.toFixed(1));
+    const values = clases.map(c => c.f);
 
     if (miHistograma) [miHistograma, miPoligono, miOjiva, miPareto].forEach(c => c?.destroy());
 
-    const opt = { responsive: true, maintainAspectRatio: false };
-    miHistograma = new Chart(document.getElementById('canvas-histograma').getContext('2d'), { type: 'bar', data: { labels, datasets: [{ label: 'f', data: values, backgroundColor: color+'88', borderColor: color, borderWidth: 1 }] }, options: opt });
-    miPoligono = new Chart(document.getElementById('canvas-poligono').getContext('2d'), { type: 'line', data: { labels, datasets: [{ label: TRADUCCIONES[lang].chart_trend || 'Trend', data: values, borderColor: color, tension: 0.4 }] }, options: opt });
+    const opt = { 
+        responsive: true, 
+        maintainAspectRatio: false,
+        scales: {
+            x: { grid: { display: false } },
+            y: { beginAtZero: true }
+        }
+    };
+
+    // Histograma: Las barras deben estar juntas para representar clases continuas
+    miHistograma = new Chart(document.getElementById('canvas-histograma').getContext('2d'), { 
+        type: 'bar', 
+        data: { 
+            labels, 
+            datasets: [{ 
+                label: 'fᵢ', 
+                data: values, 
+                backgroundColor: color+'88', 
+                borderColor: color, 
+                borderWidth: 1,
+                barPercentage: 1, // Barras juntas
+                categoryPercentage: 1
+            }] 
+        }, 
+        options: opt 
+    });
+
+    // Polígono: Usa marcas de clase
+    miPoligono = new Chart(document.getElementById('canvas-poligono').getContext('2d'), { 
+        type: 'line', 
+        data: { 
+            labels: marcas, 
+            datasets: [{ 
+                label: TRADUCCIONES[lang].chart_trend || 'Trend', 
+                data: values, 
+                borderColor: color, 
+                backgroundColor: color+'22',
+                fill: true,
+                tension: 0.4 
+            }] 
+        }, 
+        options: opt 
+    });
     
     let sum = 0; const acum = values.map(v => sum += v);
-    miOjiva = new Chart(document.getElementById('canvas-ojiva').getContext('2d'), { type: 'line', data: { labels, datasets: [{ label: 'F', data: acum, borderColor: style.getPropertyValue('--accent') }] }, options: opt });
+    miOjiva = new Chart(document.getElementById('canvas-ojiva').getContext('2d'), { 
+        type: 'line', 
+        data: { 
+            labels, 
+            datasets: [{ 
+                label: 'Fᵢ', 
+                data: acum, 
+                borderColor: style.getPropertyValue('--accent'),
+                tension: 0.1,
+                fill: false
+            }] 
+        }, 
+        options: opt 
+    });
 
-    const pData = labels.map((l, i) => ({ l, v: values[i] })).sort((a,b) => b.v - a.v);
-    miPareto = new Chart(document.getElementById('canvas-pareto').getContext('2d'), { type: 'bar', data: { labels: pData.map(d => d.l), datasets: [{ label: 'f', data: pData.map(d => d.v), backgroundColor: color }] }, options: opt });
+    const pData = clases.map(c => ({ l: c.intervalo, v: c.f })).sort((a,b) => b.v - a.v);
+    const totalFreq = pData.reduce((acc, d) => acc + d.v, 0);
+    let pAcumSum = 0;
+    const pAcumData = pData.map(d => {
+        pAcumSum += d.v;
+        return (pAcumSum / totalFreq * 100).toFixed(1);
+    });
+
+    miPareto = new Chart(document.getElementById('canvas-pareto').getContext('2d'), { 
+        data: { 
+            labels: pData.map(d => d.l), 
+            datasets: [
+                { 
+                    type: 'line',
+                    label: TRADUCCIONES[lang].chart_pareto_line || '% Acum',
+                    data: pAcumData,
+                    borderColor: style.getPropertyValue('--accent'),
+                    backgroundColor: style.getPropertyValue('--accent'),
+                    borderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 8,
+                    fill: false,
+                    yAxisID: 'y1',
+                    tension: 0.2,
+                    order: 1 // Capa superior
+                },
+                { 
+                    type: 'bar',
+                    label: 'fᵢ', 
+                    data: pData.map(d => d.v), 
+                    backgroundColor: color + 'CC', // Un poco de transparencia para ver mejor
+                    borderColor: color,
+                    borderWidth: 1,
+                    yAxisID: 'y',
+                    order: 2 // Capa inferior
+                }
+            ] 
+        }, 
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: true, position: 'top' }
+            },
+            scales: {
+                x: { grid: { display: false } },
+                y: { 
+                    beginAtZero: true, 
+                    position: 'left',
+                    title: { display: true, text: 'fᵢ', color: color },
+                    grid: { color: style.getPropertyValue('--border') + '44' }
+                },
+                y1: { 
+                    beginAtZero: true, 
+                    max: 100, 
+                    position: 'right',
+                    grid: { drawOnChartArea: false },
+                    title: { display: true, text: '%', color: style.getPropertyValue('--accent') },
+                    ticks: { callback: value => value + "%" }
+                }
+            }
+        } 
+    });
 }
 
 function actualizarColoresGrafica() { if (miHistograma) actualizarTodo(); }

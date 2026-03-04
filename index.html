@@ -123,6 +123,15 @@
                         <textarea id="input-manual" data-i18n-placeholder="input_manual_placeholder" placeholder="Ej: 10, 25, 30..."></textarea>
                     </div>
 
+                    <div class="data-group">
+                        <label class="section-subtitle">Configuración de Clases</label>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 0.8rem; opacity: 0.8;">N° Clases (k):</span>
+                            <input type="number" id="input-k" placeholder="Auto" style="width: 70px; padding: 5px; border-radius: 5px; border: 1px solid var(--border); background: var(--input-bg); color: var(--text);" oninput="actualizarTodo()">
+                            <small style="font-size: 0.7rem; opacity: 0.5;">(Vacio = Sturges)</small>
+                        </div>
+                    </div>
+
                     <button class="btn-primary" onclick="actualizarTodo()" data-i18n="btn_update">Actualizar y Calcular</button>
                 </section>
 
@@ -142,7 +151,7 @@
                     </div>
                 </section>
 
-                <section id="modulo-graficas" class="card chart-panel">
+                <section id="modulo-graficas" class="card chart-panel" style="display: none; min-width: 0;">
                     <div class="card-header"><h3 data-i18n="card_visualization">📊 | Visualización Avanzada</h3></div>
                     <div class="charts-stack">
                         <div class="chart-wrapper">
@@ -164,7 +173,7 @@
                             </div>
                         </div>
                         <div class="chart-wrapper">
-                            <h4 data-i18n="chart_pareto">Diagrama de Pareto</h4>
+                            <h4 data-i18n="chart_pareto" title="Barras: Frecuencia Absoluta | Línea: % Acumulado">Diagrama de Pareto</h4>
                             <div class="canvas-area">
                                 <canvas id="canvas-pareto"></canvas>
                             </div>
