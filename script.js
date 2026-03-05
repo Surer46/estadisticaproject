@@ -1,5 +1,5 @@
 /**
- * STATISTICAL DASHBOARD ENGINE - v1.0
+ * STATISTICAL DASHBOARD ENGINE - v1.1
  * Developed by OMMM
  * Full multi-language support (ES/EN)
  */

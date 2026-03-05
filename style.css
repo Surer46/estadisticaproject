@@ -614,6 +614,15 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
     opacity: 0.5;
     font-weight: 800;
     z-index: 10;
+    cursor: help;
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+.version-badge:hover {
+    opacity: 1;
+    transform: scale(1.1);
+    background: var(--primary);
+    color: white;
 }
 
 /* Selector de Idioma */
