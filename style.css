@@ -521,7 +521,15 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
    11. DISEÑO ADAPTATIVO (RENOVADO)
    ========================================== */
 @media (max-width: 1024px) {
-    .dashboard-grid { grid-template-columns: 1fr !important; }
+    .dashboard-grid { 
+        display: flex !important;
+        flex-direction: column !important;
+        grid-template-columns: 1fr !important; 
+    }
+    
+    .dashboard-grid.full-view {
+        flex-direction: column !important;
+    }
 }
 
 @media (max-width: 768px) {
