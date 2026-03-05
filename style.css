@@ -720,9 +720,15 @@ input:checked + .slider:before {
     text-transform: uppercase;
 }
 
-.result-values {
+.results-values {
     font-family: monospace;
     font-size: 1rem;
     letter-spacing: 1px;
     word-break: break-all;
+}
+
+.problem-context-box {
+    animation: fadeIn 0.4s ease;
+    border-left: 4px solid var(--primary);
+    background: var(--input-bg);
 }

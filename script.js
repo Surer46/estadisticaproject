@@ -983,6 +983,8 @@ function reiniciarArbol() {
     treeData = { id: 'root', name: lang === 'en' ? 'Start' : 'Inicio', prob: 1, children: [] }; 
     selectedNode = treeData; 
     document.getElementById('selected-node-name').innerText = treeData.name;
+    const contextBox = document.getElementById('multi-problem-context');
+    if (contextBox) contextBox.style.display = 'none';
     drawTreeCanvas(); 
 }
 
