@@ -525,10 +525,25 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
         display: flex !important;
         flex-direction: column !important;
         grid-template-columns: 1fr !important; 
+        gap: 15px !important;
     }
     
     .dashboard-grid.full-view {
         flex-direction: column !important;
+    }
+
+    .table-wrapper {
+        margin: 0 !important;
+        width: 100% !important;
+        box-sizing: border-box;
+    }
+
+    table {
+        font-size: 0.75rem; /* Letra un poco más pequeña para móvil */
+    }
+
+    th, td {
+        padding: 8px 5px !important;
     }
 }
 

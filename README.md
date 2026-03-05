@@ -20,6 +20,9 @@ Aquí descubrirás tres cosas mágicas sobre tus números:
 *   **Media:** El promedio de todos tus números (como tu calificación final).
 *   **Mediana:** El número que queda justo en el centro si los formas en una fila.
 *   **Moda:** El número que más veces se repite (el más "popular").
+*   **Dato Mayor:** El número más grande de toda tu lista. 🔝
+*   **Dato Menor:** El número más pequeño que tienes. 📉
+*   **Rango (R):** La distancia que hay entre el más pequeño y el más grande (Resta: Mayor - Menor). 📏
 
 ### 3. Gráficas Estadísticas 📊
 ¡A veces una imagen vale más que mil números!

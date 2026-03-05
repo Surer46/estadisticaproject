@@ -41,7 +41,9 @@ const TRADUCCIONES = {
         card_tendency: '📈 | Medidas de Tendencia',
         stat_mean: 'Media (x̄)',
         stat_median: 'Mediana (Me)',
-        stat_mode: 'Moda (Mo)',
+        stat_range: 'Rango (R)',
+        stat_max: 'Dato Mayor',
+        stat_min: 'Dato Menor',
         card_visualization: '📊 | Visualización Avanzada',
         chart_histogram: 'Histograma de Frecuencias',
         chart_polygon: 'Polígono de Frecuencias',
@@ -436,8 +438,14 @@ function actualizarTodo() {
         document.getElementById('stat-media').innerText = media;
         document.getElementById('stat-mediana').innerText = isNaN(mediana) ? "-" : mediana;
         document.getElementById('stat-moda').innerText = isNaN(moda) ? "-" : moda;
+        document.getElementById('stat-max').innerText = max.toFixed(1);
+        document.getElementById('stat-min').innerText = min.toFixed(1);
+        document.getElementById('stat-range').innerText = R.toFixed(1);
     } else {
-        ['media', 'mediana', 'moda'].forEach(id => document.getElementById(`stat-${id}`).innerText = "-");
+        ['media', 'mediana', 'moda', 'max', 'min', 'range'].forEach(id => {
+            const el = document.getElementById(`stat-${id}`);
+            if (el) el.innerText = "-";
+        });
     }
 
     // Renderizado
