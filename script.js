@@ -333,13 +333,10 @@ function cambiarVista(tipo) {
     });
 
     if (tipo === 'general') {
-        grid.className = "dashboard-grid full-view";
         ['.input-panel', '#modulo-tendencia', '#modulo-tabla', '#modulo-graficas'].forEach(s => {
             const el = document.querySelector(s); if(el) el.style.display = (s === '#modulo-tendencia' ? "grid" : "block");
         });
     } else {
-        // Para la tabla, mantenemos el diseño de 2 columnas para facilidad de entrada
-        grid.className = (tipo === 'tabla') ? "dashboard-grid" : "dashboard-grid single-module";
         if (tipo === 'tabla' || tipo === 'tendencia') document.querySelector('.input-panel').style.display = "block";
         const target = document.getElementById(tipo === 'tabla' ? 'modulo-tabla' : `modulo-${tipo}`);
         if (target) target.style.display = (tipo === 'tendencia' ? "grid" : "block");
